@@ -59,6 +59,18 @@ export default {
             );
         }
 
+        try {
+            await targetUser.send({
+                embeds: [
+                    successEmbed(
+                        "👢 You Have Been Kicked",
+                        `You have been **kicked** from **${interaction.guild.name}**.\n\n` +
+                        `**Reason:** ${reason}`,
+                    ),
+                ],
+            });
+        } catch {}
+
         const result = await ModerationService.kickUser({
             guild: interaction.guild,
             member,
