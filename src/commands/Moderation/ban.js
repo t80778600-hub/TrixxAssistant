@@ -55,7 +55,7 @@ export default {
                 embeds: [
                     successEmbed(
                         `🚫 You have been banned from ${interaction.guild.name}`,
-                        `**Reason:** ${reason}\n\nIf you believe this ban was made in error, please contact the server staff.`,
+                        `**Reason:** ${reason}\n\nIf you believe this ban was made in error, please contact the server staff. in https://discord.gg/kPbq7WajWF`,
                     ),
                 ],
             });
