@@ -19,18 +19,30 @@ const durationChoices = [
     { name: "7 days", value: "7d" },
 ];
 
-const durationToMs = {
-    "1m": 1 * 60 * 1000,
-    "5m": 5 * 60 * 1000,
-    "10m": 10 * 60 * 1000,
-    "30m": 30 * 60 * 1000,
-    "1h": 1 * 60 * 60 * 1000,
-    "3h": 3 * 60 * 60 * 1000,
-    "6h": 6 * 60 * 60 * 1000,
-    "12h": 12 * 60 * 60 * 1000,
-    "1d": 1 * 24 * 60 * 60 * 1000,
-    "7d": 7 * 24 * 60 * 60 * 1000,
-};
+function parseDuration(duration) {
+    const match = duration.match(/^(\d+)(m|h|d)$/i);
+
+    if (!match) {
+        return null;
+    }
+
+    const amount = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+
+    switch (unit) {
+        case "m":
+            return amount * 60 * 1000;
+
+        case "h":
+            return amount * 60 * 60 * 1000;
+
+        case "d":
+            return amount * 24 * 60 * 60 * 1000;
+
+        default:
+            return null;
+    }
+}
 
 export default {
     data: new SlashCommandBuilder()
@@ -108,21 +120,16 @@ export default {
             );
         }
 
-        const durationMs = durationToMs[duration];
+        const durationMs = parseDuration(duration);
 
         if (!durationMs) {
             throw new TitanBotError(
                 "Invalid duration",
                 ErrorTypes.USER_INPUT,
-                "Invalid duration. Please select a valid duration.",
+                "Invalid duration. Use values such as 1m, 1h, or 1d.",
             );
         }
 
-        const durationDisplay =
-            durationChoices.find((choice) => choice.value === duration)?.name ||
-            duration;
-
-        // Apply the timeout FIRST
         const result = await ModerationService.timeoutUser({
             guild: interaction.guild,
             member,
@@ -131,23 +138,9 @@ export default {
             reason,
         });
 
-        // DM the user AFTER the timeout succeeds
-        try {
-            await targetUser.send({
-                embeds: [
-                    successEmbed(
-                        `⏳ You have been timed out in ${interaction.guild.name}`,
-                        `**Duration:** ${durationDisplay}\n**Reason:** ${reason}\n**Case ID:** #${result.caseId}\n\nYour timeout will expire automatically after the duration above.`,
-                    ),
-                ],
-            });
-        } catch (error) {
-            logger.warn(`Could not DM ${targetUser.tag} about timeout`, {
-                userId: targetUser.id,
-                guildId: interaction.guildId,
-                error: error.message,
-            });
-        }
+        const durationDisplay =
+            durationChoices.find((c) => c.value === duration)?.name ||
+            duration;
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
