@@ -40,11 +40,29 @@ export default {
                 'You cannot ban yourself.',
             );
         }
+
         if (user.id === client.user.id) {
             throw new TitanBotError(
                 'Cannot ban bot',
                 ErrorTypes.VALIDATION,
                 'You cannot ban the bot.',
+            );
+        }
+
+        // DM the user before banning them
+        try {
+            await user.send({
+                embeds: [
+                    successEmbed(
+                        `🚫 You have been banned from ${interaction.guild.name}`,
+                        `**Reason:** ${reason}\n\nIf you believe this ban was made in error, please contact the server staff.`,
+                    ),
+                ],
+            });
+        } catch (error) {
+            // DMs are closed, bot is blocked, etc.
+            console.log(
+                `Could not DM ${user.tag} (${user.id}) about their ban.`
             );
         }
 
