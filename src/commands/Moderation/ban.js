@@ -1,8 +1,11 @@
+
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { successEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { TitanBotError, ErrorTypes } from '../../utils/errorHandler.js';
+
+const BAN_ROLE_ID = '1543948135418560582';
 
 export default {
     data: new SlashCommandBuilder()
@@ -17,10 +20,27 @@ export default {
         .addStringOption((option) =>
             option.setName("reason").setDescription("Reason for the ban"),
         )
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
     category: "moderation",
 
     async execute(interaction, config, client) {
+        const member = interaction.member;
+
+        // Allow administrators or members with the specified role
+        const isAdmin = member.permissions.has(
+            PermissionFlagsBits.Administrator
+        );
+
+        const hasBanRole = member.roles.cache.has(BAN_ROLE_ID);
+
+        if (!isAdmin && !hasBanRole) {
+            return interaction.reply({
+                content: "You don't have permission to use this command.",
+                ephemeral: true,
+            });
+        }
+
         const user = interaction.options.getUser("target");
         const reason = interaction.options.getString("reason") || "No reason provided";
 
@@ -60,7 +80,6 @@ export default {
                 ],
             });
         } catch (error) {
-            // DMs are closed, bot is blocked, etc.
             console.log(
                 `Could not DM ${user.tag} (${user.id}) about their ban.`
             );
