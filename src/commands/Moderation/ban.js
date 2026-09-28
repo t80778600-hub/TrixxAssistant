@@ -8,44 +8,53 @@ const BAN_ROLE_ID = '1543948135418560582';
 
 export default {
     data: new SlashCommandBuilder()
-        .setName("ban")
-        .setDescription("Ban a user from the server")
+        .setName('ban')
+        .setDescription('Ban a user from the server')
         .addUserOption((option) =>
             option
-                .setName("target")
-                .setDescription("The user to ban")
+                .setName('target')
+                .setDescription('The user to ban')
                 .setRequired(true),
         )
         .addStringOption((option) =>
-            option.setName("reason").setDescription("Reason for the ban"),
+            option
+                .setName('reason')
+                .setDescription('Reason for the ban'),
         )
+
+        // Discord will only automatically allow Administrators.
+        // The custom role is checked manually below.
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-    category: "moderation",
+    category: 'moderation',
 
     async execute(interaction, config, client) {
-        // Fetch the member to ensure their current roles are checked
+        // Get the member from the guild to make sure we have their
+        // current roles and permissions.
         const member = await interaction.guild.members.fetch(
             interaction.user.id
         );
 
-        // Allow administrators or members with the specified role
+        // Check if they are a Discord Administrator.
         const isAdmin = member.permissions.has(
             PermissionFlagsBits.Administrator
         );
 
+        // Check if they have the specific Ban role.
         const hasBanRole = member.roles.cache.has(BAN_ROLE_ID);
 
+        // ONLY Administrator OR the specific role can continue.
         if (!isAdmin && !hasBanRole) {
             return interaction.reply({
-                content: "You don't have permission to use this command.",
+                content: '❌ You do not have permission to use `/ban`.',
                 ephemeral: true,
             });
         }
 
-        const user = interaction.options.getUser("target");
+        const user = interaction.options.getUser('target');
         const reason =
-            interaction.options.getString("reason") || "No reason provided";
+            interaction.options.getString('reason') ||
+            'No reason provided';
 
         if (!user) {
             throw new TitanBotError(
@@ -78,7 +87,7 @@ export default {
                 embeds: [
                     successEmbed(
                         `🚫 You have been banned from ${interaction.guild.name}`,
-                        `**Reason:** ${reason}\n\nIf you believe this ban was made in error, please contact the server staff. in https://discord.gg/kPbq7WajWF`,
+                        `**Reason:** ${reason}\n\nIf you believe this ban was made in error, please contact the server staff in https://discord.gg/kPbq7WajWF`,
                     ),
                 ],
             });
