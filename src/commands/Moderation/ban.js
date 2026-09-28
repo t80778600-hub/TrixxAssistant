@@ -24,7 +24,10 @@ export default {
     category: "moderation",
 
     async execute(interaction, config, client) {
-        const member = interaction.member;
+        // Fetch the member to ensure their current roles are checked
+        const member = await interaction.guild.members.fetch(
+            interaction.user.id
+        );
 
         // Allow administrators or members with the specified role
         const isAdmin = member.permissions.has(
@@ -41,7 +44,8 @@ export default {
         }
 
         const user = interaction.options.getUser("target");
-        const reason = interaction.options.getString("reason") || "No reason provided";
+        const reason =
+            interaction.options.getString("reason") || "No reason provided";
 
         if (!user) {
             throw new TitanBotError(
@@ -87,7 +91,7 @@ export default {
         const result = await ModerationService.banUser({
             guild: interaction.guild,
             user,
-            moderator: interaction.member,
+            moderator: member,
             reason,
         });
 
