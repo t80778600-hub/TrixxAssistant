@@ -1,7 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
 
 export default {
-    name: 'time',
+    name: 'ntime',
     description: 'Display ticket support hours',
 
     async execute(message, args, client) {
