@@ -7,28 +7,28 @@ import {
   MessageFlags
 } from 'discord.js';
 
-const CHANNEL_ID = '1555365687810195566';
+const GIFT_REQUEST_CHANNEL_ID = '1555365687810195566';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('requestgift')
-    .setDescription('Request an item from the item shop')
+    .setDescription('Submit a gift request')
     .addUserOption(option =>
       option
         .setName('username')
-        .setDescription('Player receiving the gift')
+        .setDescription('The player receiving the gift')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('item')
-        .setDescription('Item being requested')
+        .setDescription('The item being requested')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('prize')
-        .setDescription('Prize amount')
+        .setDescription('The prize amount')
         .setRequired(true)
     ),
 
@@ -38,12 +38,12 @@ export default {
     const prize = interaction.options.getString('prize');
 
     const channel = await interaction.guild.channels
-      .fetch(CHANNEL_ID)
+      .fetch(GIFT_REQUEST_CHANNEL_ID)
       .catch(() => null);
 
     if (!channel || !channel.isTextBased()) {
       return interaction.reply({
-        content: 'Gift request channel not found.',
+        content: 'The gift request channel could not be found.',
         flags: MessageFlags.Ephemeral
       });
     }
@@ -55,15 +55,16 @@ export default {
         `**Player:** ${user}\n` +
         `**Item:** ${item}\n` +
         `**Prize:** ${prize}\n\n` +
-        'Please click the **Gifted** button once ' +
-        'you have sent the gift!'
+        'Please click the **Gifted** button once you have sent the gift!'
       )
-      .setFooter({ text: 'Status: Pending' })
+      .setFooter({
+        text: 'Status: Pending'
+      })
       .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(`gifted:${user.id}`)
+        .setCustomId(`gifted:${user.id}:${interaction.user.id}`)
         .setLabel('Gifted')
         .setStyle(ButtonStyle.Success)
     );
@@ -74,7 +75,7 @@ export default {
     });
 
     return interaction.reply({
-      content: 'Your gift request has been submitted!',
+      content: 'Your gift request has been submitted.',
       flags: MessageFlags.Ephemeral
     });
   }
