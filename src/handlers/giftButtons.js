@@ -6,72 +6,67 @@ import {
 
 const STAFF_ROLE_ID = '1543938945056903239';
 
-export default {
-  customId: 'gifted',
+export default async function giftedButtonHandler(interaction) {
+  try {
+    const isAdmin = interaction.memberPermissions?.has(
+      PermissionFlagsBits.Administrator
+    );
 
-  async execute(interaction) {
-    try {
-      const isAdmin = interaction.memberPermissions?.has(
-        PermissionFlagsBits.Administrator
-      );
+    const isStaff = interaction.member?.roles?.cache?.has(STAFF_ROLE_ID);
 
-      const isStaff = interaction.member?.roles?.cache?.has(STAFF_ROLE_ID);
+    if (!isAdmin && !isStaff) {
+      return interaction.reply({
+        content: 'You do not have permission to use this button.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
-      if (!isAdmin && !isStaff) {
-        return await interaction.reply({
-          content: 'You do not have permission to use this button.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+    const embed = interaction.message.embeds[0];
 
-      const oldEmbed = interaction.message.embeds[0];
+    if (!embed) {
+      return interaction.reply({
+        content: 'Gift request information could not be found.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
-      if (!oldEmbed) {
-        return await interaction.reply({
-          content: 'Could not find the gift request.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+    const footer = embed.footer?.text;
 
-      const footer = oldEmbed.footer?.text;
+    if (!footer || !footer.startsWith('Requested by: ')) {
+      return interaction.reply({
+        content: 'The requester could not be found.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
 
-      if (!footer || !footer.startsWith('User ID: ')) {
-        return await interaction.reply({
-          content: 'Could not find the requester.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+    const userId = footer.replace('Requested by: ', '').trim();
 
-      const userId = footer.replace('User ID: ', '').trim();
+    const user = await interaction.client.users.fetch(userId);
 
-      const user = await interaction.client.users.fetch(userId);
+    await user.send(
+      `Your Fortnite gift request has been **gifted** by ${interaction.user.tag}.`
+    );
 
-      await user.send(
-        `Your Fortnite gift request has been **gifted** by ${interaction.user.tag}.`
-      );
-
-      const updatedEmbed = EmbedBuilder.from(oldEmbed)
-        .setTitle('Gift Request - Gifted')
-        .addFields({
-          name: 'Gifted By',
-          value: `${interaction.user}`,
-          inline: false,
-        });
-
-      await interaction.update({
-        embeds: [updatedEmbed],
-        components: [],
+    const updatedEmbed = EmbedBuilder.from(embed)
+      .setTitle('Gift Request - Gifted')
+      .addFields({
+        name: 'Gifted By',
+        value: `${interaction.user}`,
+        inline: false,
       });
 
-    } catch (error) {
-      console.error('GIFT BUTTON ERROR:', error);
+    await interaction.update({
+      embeds: [updatedEmbed],
+      components: [],
+    });
+  } catch (error) {
+    console.error('GIFT BUTTON ERROR:', error);
 
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: 'Something went wrong while processing this gift.',
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: 'Something went wrong while processing this gift.',
+        flags: MessageFlags.Ephemeral,
+      });
     }
-  },
-};
+  }
+}
