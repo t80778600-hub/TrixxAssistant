@@ -12,36 +12,38 @@ const GIFT_CHANNEL_ID = '1555365687810195566';
 export default {
   data: new SlashCommandBuilder()
     .setName('requestgift')
-    .setDescription('Request an item shop gift')
-    .addUserOption(option =>
+    .setDescription('Submit a Fortnite gift request')
+    .addStringOption(option =>
       option
         .setName('username')
-        .setDescription('The person requesting the gift')
+        .setDescription('Enter the Fortnite username')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('item')
-        .setDescription('The item you want')
+        .setDescription('Enter the item you want')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
-        .setName('prize')
-        .setDescription('The prize/value')
+        .setName('cost')
+        .setDescription('Enter the cost of the item')
         .setRequired(true)
     ),
 
   async execute(interaction) {
-    const user = interaction.options.getUser('username');
+    const username = interaction.options.getString('username');
     const item = interaction.options.getString('item');
-    const prize = interaction.options.getString('prize');
+    const cost = interaction.options.getString('cost');
 
-    const channel = interaction.guild.channels.cache.get(GIFT_CHANNEL_ID);
+    const channel = await interaction.client.channels.fetch(
+      GIFT_CHANNEL_ID
+    );
 
     if (!channel) {
       return interaction.reply({
-        content: 'Gift request channel could not be found.',
+        content: 'The gift request channel could not be found.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -49,18 +51,17 @@ export default {
     const embed = new EmbedBuilder()
       .setTitle('Gift Request Submitted')
       .setDescription(
-        `${user} has requested **${item}** from the item shop.\n\n` +
-        `**Prize:** ${prize}\n\n` +
+        `**${username}** has requested **${item}** from the item shop.\n\n` +
+        `**Cost:** ${cost}\n\n` +
         `Please click the **Gifted** button once you have sent the gift!`
       )
-      .setColor(0x2b2d31)
       .setFooter({
-        text: `User ID: ${user.id}`,
+        text: `Requested by: ${interaction.user.id}`,
       })
       .setTimestamp();
 
     const button = new ButtonBuilder()
-      .setCustomId('gifted')
+      .setCustomId(`gifted:${interaction.user.id}`)
       .setLabel('Gifted')
       .setStyle(ButtonStyle.Success);
 
