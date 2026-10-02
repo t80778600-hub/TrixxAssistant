@@ -37,9 +37,7 @@ export default {
     const item = interaction.options.getString('item');
     const cost = interaction.options.getString('cost');
 
-    const channel = await interaction.client.channels.fetch(
-      GIFT_CHANNEL_ID
-    );
+    const channel = await interaction.client.channels.fetch(GIFT_CHANNEL_ID);
 
     if (!channel) {
       return interaction.reply({
@@ -51,17 +49,15 @@ export default {
     const embed = new EmbedBuilder()
       .setTitle('Gift Request Submitted')
       .setDescription(
-        `**${username}** has requested **${item}** from the item shop.\n\n` +
+        `${interaction.user} has requested **${item}** from the item shop.\n\n` +
+        `**Username:** ${username}\n` +
         `**Cost:** ${cost}\n\n` +
         `Please click the **Gifted** button once you have sent the gift!`
       )
-      .setFooter({
-        text: `Requested by: ${interaction.user.id}`,
-      })
       .setTimestamp();
 
     const button = new ButtonBuilder()
-      .setCustomId('gifted')
+      .setCustomId(`gifted_${interaction.user.id}`)
       .setLabel('Gifted')
       .setStyle(ButtonStyle.Success);
 
