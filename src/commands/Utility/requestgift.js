@@ -57,7 +57,7 @@ export default {
       .setTimestamp();
 
     const button = new ButtonBuilder()
-      .setCustomId(`gifted_${interaction.user.id}`)
+      .setCustomId(`gifted:${interaction.user.id}`)
       .setLabel('Gifted')
       .setStyle(ButtonStyle.Success);
 
