@@ -21,35 +21,23 @@ export default async function giftedButtonHandler(interaction) {
       });
     }
 
-    const embed = interaction.message.embeds[0];
+    // gifted_123456789
+    const userId = interaction.customId.split('_')[1];
 
-    if (!embed) {
-      return interaction.reply({
-        content: 'Gift request information could not be found.',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const footerText = embed.footer?.text || '';
-
-    // Gets the Discord ID from:
-    // Requested by: 123456789
-    const match = footerText.match(/Requested by:\s*(\d+)/);
-
-    if (!match) {
+    if (!userId) {
       return interaction.reply({
         content: 'The requester could not be found.',
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    const userId = match[1];
-
     const user = await interaction.client.users.fetch(userId);
 
     await user.send(
-      `Your Fortnite gift request has been **gifted** by ${interaction.user.tag}.`
+      `Your Fortnite gift request has been **gifted** by ${interaction.user}.`
     );
+
+    const embed = interaction.message.embeds[0];
 
     const updatedEmbed = EmbedBuilder.from(embed)
       .setTitle('Gift Request - Gifted')
@@ -63,7 +51,6 @@ export default async function giftedButtonHandler(interaction) {
       embeds: [updatedEmbed],
       components: [],
     });
-
   } catch (error) {
     console.error('GIFT BUTTON ERROR:', error);
 
