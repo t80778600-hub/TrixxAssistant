@@ -30,16 +30,20 @@ export default async function giftedButtonHandler(interaction) {
       });
     }
 
-    const footer = embed.footer?.text;
+    const footerText = embed.footer?.text || '';
 
-    if (!footer || !footer.startsWith('Requested by: ')) {
+    // Gets the Discord ID from:
+    // Requested by: 123456789
+    const match = footerText.match(/Requested by:\s*(\d+)/);
+
+    if (!match) {
       return interaction.reply({
         content: 'The requester could not be found.',
         flags: MessageFlags.Ephemeral,
       });
     }
 
-    const userId = footer.replace('Requested by: ', '').trim();
+    const userId = match[1];
 
     const user = await interaction.client.users.fetch(userId);
 
@@ -59,6 +63,7 @@ export default async function giftedButtonHandler(interaction) {
       embeds: [updatedEmbed],
       components: [],
     });
+
   } catch (error) {
     console.error('GIFT BUTTON ERROR:', error);
 
