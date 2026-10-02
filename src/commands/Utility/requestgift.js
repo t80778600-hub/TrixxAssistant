@@ -4,31 +4,31 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  MessageFlags
+  MessageFlags,
 } from 'discord.js';
 
-const GIFT_REQUEST_CHANNEL_ID = '1555365687810195566';
+const GIFT_CHANNEL_ID = '1555365687810195566';
 
 export default {
   data: new SlashCommandBuilder()
     .setName('requestgift')
-    .setDescription('Submit a gift request')
+    .setDescription('Request an item shop gift')
     .addUserOption(option =>
       option
         .setName('username')
-        .setDescription('The player receiving the gift')
+        .setDescription('The person requesting the gift')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('item')
-        .setDescription('The item being requested')
+        .setDescription('The item you want')
         .setRequired(true)
     )
     .addStringOption(option =>
       option
         .setName('prize')
-        .setDescription('The prize amount')
+        .setDescription('The prize/value')
         .setRequired(true)
     ),
 
@@ -37,46 +37,43 @@ export default {
     const item = interaction.options.getString('item');
     const prize = interaction.options.getString('prize');
 
-    const channel = await interaction.guild.channels
-      .fetch(GIFT_REQUEST_CHANNEL_ID)
-      .catch(() => null);
+    const channel = interaction.guild.channels.cache.get(GIFT_CHANNEL_ID);
 
-    if (!channel || !channel.isTextBased()) {
+    if (!channel) {
       return interaction.reply({
-        content: 'The gift request channel could not be found.',
-        flags: MessageFlags.Ephemeral
+        content: 'Gift request channel could not be found.',
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const embed = new EmbedBuilder()
-      .setColor('#F1C40F')
       .setTitle('Gift Request Submitted')
       .setDescription(
-        `**Player:** ${user}\n` +
-        `**Item:** ${item}\n` +
+        `${user} has requested **${item}** from the item shop.\n\n` +
         `**Prize:** ${prize}\n\n` +
-        'Please click the **Gifted** button once you have sent the gift!'
+        `Please click the **Gifted** button once you have sent the gift!`
       )
+      .setColor(0x2b2d31)
       .setFooter({
-        text: 'Status: Pending'
+        text: `User ID: ${user.id}`,
       })
       .setTimestamp();
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`gifted:${user.id}:${interaction.user.id}`)
-        .setLabel('Gifted')
-        .setStyle(ButtonStyle.Success)
-    );
+    const button = new ButtonBuilder()
+      .setCustomId('gifted')
+      .setLabel('Gifted')
+      .setStyle(ButtonStyle.Success);
+
+    const row = new ActionRowBuilder().addComponents(button);
 
     await channel.send({
       embeds: [embed],
-      components: [row]
+      components: [row],
     });
 
-    return interaction.reply({
+    await interaction.reply({
       content: 'Your gift request has been submitted.',
-      flags: MessageFlags.Ephemeral
+      flags: MessageFlags.Ephemeral,
     });
-  }
+  },
 };
