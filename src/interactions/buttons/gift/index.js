@@ -1,5 +1,8 @@
-import giftedButton from '../../../handlers/giftButtons.js';
+import giftedButtonHandler from '../../../handlers/giftButtons.js';
 
 export default [
-  giftedButton,
+  {
+    name: 'gifted',
+    execute: giftedButtonHandler,
+  },
 ];
