@@ -22,12 +22,20 @@ export default {
       });
     }
 
-    const userId = interaction.message.embeds[0]?.footer?.text
-      ?.replace('User ID: ', '');
+    const embed = interaction.message.embeds[0];
+
+    if (!embed) {
+      return interaction.reply({
+        content: 'Could not find the gift request.',
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    const userId = embed.footer?.text?.replace('User ID: ', '');
 
     if (!userId) {
       return interaction.reply({
-        content: 'Could not find the user for this request.',
+        content: 'Could not find the requester.',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -40,16 +48,19 @@ export default {
       );
 
       await interaction.update({
+        content: '✅ Gift marked as gifted.',
+        components: [],
+      });
+
+      await interaction.message.edit({
         embeds: [
           {
-            ...interaction.message.embeds[0].data,
+            ...embed.data,
             title: 'Gift Request - Gifted',
             description:
-              interaction.message.embeds[0].description +
-              `\n\n**Gifted By:** ${interaction.user}`,
+              `${embed.description || ''}\n\n**Gifted By:** ${interaction.user}`,
           },
         ],
-        components: [],
       });
     } catch (error) {
       console.error('Gift button error:', error);
@@ -57,7 +68,7 @@ export default {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content:
-            'I could not DM the requester. Their DMs may be disabled.',
+            'Could not DM the requester. Their DMs may be disabled.',
           flags: MessageFlags.Ephemeral,
         });
       }
