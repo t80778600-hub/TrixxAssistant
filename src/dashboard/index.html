@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TitanBot Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0b0d12;
+      color: #f4f5f7;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 22px 7%;
+      border-bottom: 1px solid #252936;
+      background: #10131b;
+    }
+    header h2 { margin: 0; }
+    main { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+    .muted { color: #9ca3b4; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin: 25px 0;
+    }
+    .card {
+      background: #141823;
+      border: 1px solid #292e3d;
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .card h3 { margin-top: 0; }
+    .status { color: #f5bd62; font-weight: bold; }
+    button {
+      background: #5865f2;
+      color: white;
+      border: 0;
+      padding: 11px 16px;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    a { color: #9da8ff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>TitanBot <span class="muted">/ Dashboard</span></h2>
+  </header>
+  <main>
+    <h1>Bot Overview</h1>
+    <p class="muted">Manage your TitanBot configuration from one place.</p>
+
+    <div class="cards">
+      <section class="card">
+        <h3>Bot Status</h3>
+        <p id="status" class="status">Checking...</p>
+      </section>
+      <section class="card">
+        <h3>Servers</h3>
+        <p id="guilds">Loading...</p>
+      </section>
+      <section class="card">
+        <h3>Commands</h3>
+        <p id="commands">Loading...</p>
+      </section>
+    </div>
+
+    <section class="card">
+      <h3>Dashboard Setup</h3>
+      <p class="muted">
+        Your dashboard page is installed. The next step is connecting
+        secure settings for tickets, embeds, custom commands and moderation.
+      </p>
+      <button onclick="loadStatus()">Refresh Status</button>
+      <p id="error" class="muted"></p>
+    </section>
+  </main>
+
+  <script>
+    async function loadStatus() {
+      const error = document.getElementById('error');
+      try {
+        const response = await fetch('/api/dashboard/status');
+        if (!response.ok) throw new Error('Status endpoint unavailable');
+        const data = await response.json();
+
+        document.getElementById('status').textContent =
+          data.online ? 'Online' : 'Offline';
+        document.getElementById('guilds').textContent =
+          data.guildCount ?? 'Unknown';
+        document.getElementById('commands').textContent =
+          data.commandCount ?? 'Unknown';
+        error.textContent = '';
+      } catch (e) {
+        document.getElementById('status').textContent = 'Could not connect';
+        error.textContent = 'Could not load bot status. Check the API endpoint.';
+      }
+    }
+    loadStatus();
+  </script>
+</body>
+</html>
