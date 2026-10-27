@@ -27,12 +27,11 @@
 
     main {
       max-width: 1000px;
-      margin: 40px auto;
+      margin: 35px auto;
       padding: 0 20px;
     }
 
     .muted { color: #9ca3b4; }
-
     .hidden { display: none !important; }
 
     .login-wrap {
@@ -44,36 +43,41 @@
       border-radius: 14px;
     }
 
-    input {
-      width: 100%;
-      margin: 12px 0;
-      padding: 13px;
-      background: #0b0d12;
-      border: 1px solid #34394a;
-      border-radius: 7px;
-      color: white;
-      font-size: 16px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
-      margin: 25px 0;
-    }
-
     .card {
       background: #141823;
       border: 1px solid #292e3d;
       border-radius: 12px;
       padding: 22px;
+      margin: 20px 0;
     }
 
-    .card h3 { margin-top: 0; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
 
-    .status {
-      color: #f5bd62;
+    .field { margin: 18px 0; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
       font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      background: #0b0d12;
+      border: 1px solid #34394a;
+      border-radius: 7px;
+      color: white;
+      font-size: 15px;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
     }
 
     button {
@@ -87,22 +91,23 @@
     }
 
     button:hover { background: #4752c4; }
+    button:disabled { opacity: 0.6; cursor: wait; }
 
-    .logout {
-      background: #292e3d;
-    }
-
-    .error {
-      color: #ff7777;
-      font-size: 14px;
-    }
-
+    .logout { background: #292e3d; }
+    .error { color: #ff7777; }
     .success { color: #75dfa1; }
+    .status { font-weight: bold; color: #75dfa1; }
+
+    .hint {
+      font-size: 13px;
+      color: #9ca3b4;
+      margin-top: 6px;
+    }
 
     @media (max-width: 500px) {
       header { padding: 18px 5%; }
       main { margin-top: 25px; }
-      .login-wrap { margin-top: 40px; }
+      .login-wrap { margin: 40px 20px; }
     }
   </style>
 </head>
@@ -115,17 +120,15 @@
 
   <section id="loginScreen" class="login-wrap">
     <h1>Welcome back</h1>
-    <p class="muted">Log in to manage your Trixx Bot configuration.</p>
+    <p class="muted">Log in to manage your bot.</p>
 
     <form id="loginForm">
-      <label for="password">Dashboard password</label>
-      <input
-        id="password"
-        type="password"
-        placeholder="Enter your dashboard password"
-        autocomplete="current-password"
-        required
-      >
+      <div class="field">
+        <label for="password">Dashboard password</label>
+        <input id="password" type="password"
+          placeholder="Enter your dashboard password"
+          autocomplete="current-password" required>
+      </div>
       <button type="submit" style="width:100%">Log in</button>
     </form>
 
@@ -134,19 +137,17 @@
 
   <main id="dashboardScreen" class="hidden">
     <h1>Bot Overview</h1>
-    <p class="muted">Manage your Trixx Bot configuration from one place.</p>
+    <p class="muted">Manage your server configuration.</p>
 
     <div class="cards">
       <section class="card">
         <h3>Bot Status</h3>
         <p id="status" class="status">Checking...</p>
       </section>
-
       <section class="card">
         <h3>Servers</h3>
         <p id="guilds">Loading...</p>
       </section>
-
       <section class="card">
         <h3>Commands</h3>
         <p id="commands">Loading...</p>
@@ -154,12 +155,75 @@
     </div>
 
     <section class="card">
-      <h3>Dashboard Setup</h3>
+      <h2>Ticket Settings</h2>
       <p class="muted">
-        Your login is connected. Settings editors for tickets, embeds,
-        custom commands and moderation still need to be built.
+        Configure ticket roles, categories and limits for your Discord server.
       </p>
-      <button onclick="loadStatus()">Refresh Status</button>
+
+      <form id="ticketForm">
+        <div class="field">
+          <label for="guildId">Discord Server ID</label>
+          <input id="guildId" inputmode="numeric"
+            placeholder="Enter your server ID" required>
+          <p class="hint">
+            Enable Developer Mode in Discord, then right-click your server
+            icon and select Copy Server ID.
+          </p>
+        </div>
+
+        <button type="button" id="loadTicketsButton"
+          onclick="loadTickets()">Load Ticket Settings</button>
+
+        <div id="ticketFields" class="hidden">
+          <div class="field">
+            <label for="ticketStaffRoleId">Ticket Staff Role ID</label>
+            <input id="ticketStaffRoleId" placeholder="Role ID">
+          </div>
+
+          <div class="field">
+            <label for="ticketCategoryId">Open Ticket Category ID</label>
+            <input id="ticketCategoryId" placeholder="Category ID">
+          </div>
+
+          <div class="field">
+            <label for="ticketClosedCategoryId">Closed Ticket Category ID</label>
+            <input id="ticketClosedCategoryId" placeholder="Category ID">
+          </div>
+
+          <div class="field">
+            <label for="ticketTranscriptChannelId">Transcript Channel ID</label>
+            <input id="ticketTranscriptChannelId"
+              placeholder="Channel ID">
+          </div>
+
+          <div class="field">
+            <label for="maxTicketsPerUser">Maximum Tickets Per User</label>
+            <input id="maxTicketsPerUser" type="number"
+              min="1" max="20" value="3" required>
+          </div>
+
+          <div class="field">
+            <label>
+              <input id="dmOnClose" type="checkbox" checked>
+              DM users when their ticket closes
+            </label>
+          </div>
+
+          <button type="submit" id="saveTicketsButton">
+            Save Ticket Settings
+          </button>
+        </div>
+      </form>
+
+      <p id="ticketMessage" role="status"></p>
+    </section>
+
+    <section class="card">
+      <h3>More Settings Coming Soon</h3>
+      <p class="muted">
+        Custom embeds, commands, moderation and logging will be added next.
+      </p>
+      <button onclick="loadStatus()">Refresh Bot Status</button>
       <p id="statusError" class="muted"></p>
     </section>
   </main>
@@ -187,27 +251,21 @@
         const response = await fetch('/api/dashboard/session');
         const data = await response.json();
 
-        if (data.authenticated) {
-          showDashboard();
-        } else {
-          showLogin();
-        }
+        if (data.authenticated) showDashboard();
+        else showLogin();
       } catch {
         showLogin();
         document.getElementById('loginError').textContent =
-          'Could not connect to the dashboard. Refresh and try again.';
+          'Could not connect. Refresh and try again.';
       }
     }
 
     document.getElementById('loginForm').addEventListener(
-      'submit',
-      async (event) => {
+      'submit', async (event) => {
         event.preventDefault();
 
         const error = document.getElementById('loginError');
         const passwordInput = document.getElementById('password');
-        const password = passwordInput.value;
-
         error.textContent = '';
 
         try {
@@ -215,7 +273,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ password: passwordInput.value })
           });
 
           const data = await response.json();
@@ -228,8 +286,7 @@
           passwordInput.value = '';
           showDashboard();
         } catch {
-          error.textContent =
-            'Could not connect. Check that the bot is online.';
+          error.textContent = 'Could not connect to the bot.';
         }
       }
     );
@@ -243,8 +300,6 @@
       } finally {
         showLogin();
         document.getElementById('password').value = '';
-        document.getElementById('loginError').textContent =
-          'You have been logged out.';
       }
     }
 
@@ -253,31 +308,116 @@
 
       try {
         const response = await fetch('/api/dashboard/status');
-
-        if (!response.ok) {
-          throw new Error('Status endpoint unavailable');
-        }
+        if (!response.ok) throw new Error('Status unavailable');
 
         const data = await response.json();
-
         document.getElementById('status').textContent =
           data.online ? 'Online' : 'Offline';
-
         document.getElementById('guilds').textContent =
           data.guildCount ?? 'Unknown';
-
         document.getElementById('commands').textContent =
           data.commandCount ?? 'Unknown';
-
         error.textContent = '';
       } catch {
         document.getElementById('status').textContent =
           'Could not connect';
-
-        error.textContent =
-          'Could not load bot status. Check the API endpoint.';
+        error.textContent = 'Could not load bot status.';
       }
     }
+
+    function ticketMessage(message, success = false) {
+      const element = document.getElementById('ticketMessage');
+      element.textContent = message;
+      element.className = success ? 'success' : 'error';
+    }
+
+    async function loadTickets() {
+      const guildId = document.getElementById('guildId').value.trim();
+      const button = document.getElementById('loadTicketsButton');
+
+      if (!/^\d{17,20}$/.test(guildId)) {
+        ticketMessage('Enter a valid Discord Server ID.');
+        return;
+      }
+
+      button.disabled = true;
+      ticketMessage('Loading ticket settings...', true);
+
+      try {
+        const response = await fetch(
+          `/api/dashboard/tickets/${encodeURIComponent(guildId)}`
+        );
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error || 'Could not load settings.');
+
+        const settings = data.settings;
+
+        document.getElementById('ticketStaffRoleId').value =
+          settings.ticketStaffRoleId;
+        document.getElementById('ticketCategoryId').value =
+          settings.ticketCategoryId;
+        document.getElementById('ticketClosedCategoryId').value =
+          settings.ticketClosedCategoryId;
+        document.getElementById('ticketTranscriptChannelId').value =
+          settings.ticketTranscriptChannelId;
+        document.getElementById('dmOnClose').checked = settings.dmOnClose;
+        document.getElementById('maxTicketsPerUser').value =
+          settings.maxTicketsPerUser;
+
+        document.getElementById('ticketFields').classList.remove('hidden');
+        ticketMessage('Settings loaded.', true);
+      } catch (error) {
+        ticketMessage(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById('ticketForm').addEventListener(
+      'submit', async (event) => {
+        event.preventDefault();
+
+        const guildId = document.getElementById('guildId').value.trim();
+        const button = document.getElementById('saveTicketsButton');
+
+        const settings = {
+          ticketStaffRoleId: document.getElementById('ticketStaffRoleId').value.trim(),
+          ticketCategoryId: document.getElementById('ticketCategoryId').value.trim(),
+          ticketClosedCategoryId: document.getElementById('ticketClosedCategoryId').value.trim(),
+          ticketTranscriptChannelId: document.getElementById('ticketTranscriptChannelId').value.trim(),
+          dmOnClose: document.getElementById('dmOnClose').checked,
+          maxTicketsPerUser: Number(document.getElementById('maxTicketsPerUser').value)
+        };
+
+        button.disabled = true;
+        ticketMessage('Saving ticket settings...', true);
+
+        try {
+          const response = await fetch(
+            `/api/dashboard/tickets/${encodeURIComponent(guildId)}`,
+            {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify(settings)
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Could not save settings.');
+          }
+
+          ticketMessage('Ticket settings saved successfully.', true);
+        } catch (error) {
+          ticketMessage(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      }
+    );
 
     checkSession();
   </script>
