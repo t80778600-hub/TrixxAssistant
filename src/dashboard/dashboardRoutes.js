@@ -1,17 +1,41 @@
 
 import express from 'express';
+import { timingSafeEqual } from 'node:crypto';
 import { getGuildConfig } from '../services/config/guildConfig.js';
 
 export default function registerDashboardRoutes(app, bot) {
   const router = express.Router();
 
-  // Read-only for now. Login and permission checks must be added
-  // before any route is allowed to change server settings.
-  router.get('/config/:guildId', async (req, res) => {
+  // Check the secret supplied in the Authorization header.
+  function requireDashboardSecret(req, res, next) {
+    const expected = process.env.DASHBOARD_SECRET;
+    const supplied = req.get('Authorization')?.replace(/^Bearer\s+/i, '');
+
+    if (!expected || !supplied) {
+      return res.status(401).json({
+        error: 'Dashboard authentication required'
+      });
+    }
+
+    const expectedBuffer = Buffer.from(expected);
+    const suppliedBuffer = Buffer.from(supplied);
+
+    if (
+      expectedBuffer.length !== suppliedBuffer.length ||
+      !timingSafeEqual(expectedBuffer, suppliedBuffer)
+    ) {
+      return res.status(401).json({
+        error: 'Invalid dashboard secret'
+      });
+    }
+
+    next();
+  }
+
+  // Read-only configuration endpoint, protected by the secret.
+  router.get('/config/:guildId', requireDashboardSecret, async (req, res) => {
     try {
       const { guildId } = req.params;
-
-      // Only show settings for servers the bot is actually in.
       const guild = bot.guilds.cache.get(guildId);
 
       if (!guild) {
