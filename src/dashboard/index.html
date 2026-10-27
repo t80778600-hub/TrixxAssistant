@@ -6,34 +6,76 @@
   <title>TitanBot Dashboard</title>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: #0b0d12;
       color: #f4f5f7;
       font-family: Arial, sans-serif;
     }
+
     header {
       padding: 22px 7%;
       border-bottom: 1px solid #252936;
       background: #10131b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
     header h2 { margin: 0; }
-    main { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+
+    main {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
     .muted { color: #9ca3b4; }
+
+    .hidden { display: none !important; }
+
+    .login-wrap {
+      max-width: 420px;
+      margin: 80px auto;
+      padding: 30px;
+      background: #141823;
+      border: 1px solid #292e3d;
+      border-radius: 14px;
+    }
+
+    input {
+      width: 100%;
+      margin: 12px 0;
+      padding: 13px;
+      background: #0b0d12;
+      border: 1px solid #34394a;
+      border-radius: 7px;
+      color: white;
+      font-size: 16px;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 16px;
       margin: 25px 0;
     }
+
     .card {
       background: #141823;
       border: 1px solid #292e3d;
       border-radius: 12px;
       padding: 22px;
     }
+
     .card h3 { margin-top: 0; }
-    .status { color: #f5bd62; font-weight: bold; }
+
+    .status {
+      color: #f5bd62;
+      font-weight: bold;
+    }
+
     button {
       background: #5865f2;
       color: white;
@@ -41,15 +83,56 @@
       padding: 11px 16px;
       border-radius: 7px;
       cursor: pointer;
+      font-size: 14px;
     }
-    a { color: #9da8ff; }
+
+    button:hover { background: #4752c4; }
+
+    .logout {
+      background: #292e3d;
+    }
+
+    .error {
+      color: #ff7777;
+      font-size: 14px;
+    }
+
+    .success { color: #75dfa1; }
+
+    @media (max-width: 500px) {
+      header { padding: 18px 5%; }
+      main { margin-top: 25px; }
+      .login-wrap { margin-top: 40px; }
+    }
   </style>
 </head>
 <body>
   <header>
     <h2>TitanBot <span class="muted">/ Dashboard</span></h2>
+    <button id="logoutButton" class="logout hidden"
+      onclick="logout()">Log out</button>
   </header>
-  <main>
+
+  <section id="loginScreen" class="login-wrap">
+    <h1>Welcome back</h1>
+    <p class="muted">Log in to manage your TitanBot configuration.</p>
+
+    <form id="loginForm">
+      <label for="password">Dashboard password</label>
+      <input
+        id="password"
+        type="password"
+        placeholder="Enter your dashboard password"
+        autocomplete="current-password"
+        required
+      >
+      <button type="submit" style="width:100%">Log in</button>
+    </form>
+
+    <p id="loginError" class="error"></p>
+  </section>
+
+  <main id="dashboardScreen" class="hidden">
     <h1>Bot Overview</h1>
     <p class="muted">Manage your TitanBot configuration from one place.</p>
 
@@ -58,10 +141,12 @@
         <h3>Bot Status</h3>
         <p id="status" class="status">Checking...</p>
       </section>
+
       <section class="card">
         <h3>Servers</h3>
         <p id="guilds">Loading...</p>
       </section>
+
       <section class="card">
         <h3>Commands</h3>
         <p id="commands">Loading...</p>
@@ -71,35 +156,130 @@
     <section class="card">
       <h3>Dashboard Setup</h3>
       <p class="muted">
-        Your dashboard page is installed. The next step is connecting
-        secure settings for tickets, embeds, custom commands and moderation.
+        Your login is connected. Settings editors for tickets, embeds,
+        custom commands and moderation still need to be built.
       </p>
       <button onclick="loadStatus()">Refresh Status</button>
-      <p id="error" class="muted"></p>
+      <p id="statusError" class="muted"></p>
     </section>
   </main>
 
   <script>
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const logoutButton = document.getElementById('logoutButton');
+
+    function showDashboard() {
+      loginScreen.classList.add('hidden');
+      dashboardScreen.classList.remove('hidden');
+      logoutButton.classList.remove('hidden');
+      loadStatus();
+    }
+
+    function showLogin() {
+      dashboardScreen.classList.add('hidden');
+      logoutButton.classList.add('hidden');
+      loginScreen.classList.remove('hidden');
+    }
+
+    async function checkSession() {
+      try {
+        const response = await fetch('/api/dashboard/session');
+        const data = await response.json();
+
+        if (data.authenticated) {
+          showDashboard();
+        } else {
+          showLogin();
+        }
+      } catch {
+        showLogin();
+        document.getElementById('loginError').textContent =
+          'Could not connect to the dashboard. Refresh and try again.';
+      }
+    }
+
+    document.getElementById('loginForm').addEventListener(
+      'submit',
+      async (event) => {
+        event.preventDefault();
+
+        const error = document.getElementById('loginError');
+        const passwordInput = document.getElementById('password');
+        const password = passwordInput.value;
+
+        error.textContent = '';
+
+        try {
+          const response = await fetch('/api/dashboard/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ password })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            error.textContent = data.error || 'Login failed.';
+            return;
+          }
+
+          passwordInput.value = '';
+          showDashboard();
+        } catch {
+          error.textContent =
+            'Could not connect. Check that the bot is online.';
+        }
+      }
+    );
+
+    async function logout() {
+      try {
+        await fetch('/api/dashboard/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+      } finally {
+        showLogin();
+        document.getElementById('password').value = '';
+        document.getElementById('loginError').textContent =
+          'You have been logged out.';
+      }
+    }
+
     async function loadStatus() {
-      const error = document.getElementById('error');
+      const error = document.getElementById('statusError');
+
       try {
         const response = await fetch('/api/dashboard/status');
-        if (!response.ok) throw new Error('Status endpoint unavailable');
+
+        if (!response.ok) {
+          throw new Error('Status endpoint unavailable');
+        }
+
         const data = await response.json();
 
         document.getElementById('status').textContent =
           data.online ? 'Online' : 'Offline';
+
         document.getElementById('guilds').textContent =
           data.guildCount ?? 'Unknown';
+
         document.getElementById('commands').textContent =
           data.commandCount ?? 'Unknown';
+
         error.textContent = '';
-      } catch (e) {
-        document.getElementById('status').textContent = 'Could not connect';
-        error.textContent = 'Could not load bot status. Check the API endpoint.';
+      } catch {
+        document.getElementById('status').textContent =
+          'Could not connect';
+
+        error.textContent =
+          'Could not load bot status. Check the API endpoint.';
       }
     }
-    loadStatus();
+
+    checkSession();
   </script>
 </body>
 </html>
